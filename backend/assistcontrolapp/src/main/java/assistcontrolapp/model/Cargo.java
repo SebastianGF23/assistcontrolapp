@@ -1,4 +1,4 @@
-package model;
+package assistcontrolapp.model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;

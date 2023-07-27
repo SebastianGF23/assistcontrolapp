@@ -1,5 +1,5 @@
-package repository;
-import model.Empleado;
+package assistcontrolapp.repository;
+import assistcontrolapp.model.Empleado;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

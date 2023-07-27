@@ -1,4 +1,4 @@
-package controller;
+package assistcontrolapp.controller;
 
 import java.util.List;
 
@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import model.Empleado;
-import repository.EmpleadoRepository;
+import assistcontrolapp.model.Empleado;
+import assistcontrolapp.repository.EmpleadoRepository;
 
 @RestController
 @CrossOrigin("http://localhost:3000")
@@ -24,7 +24,7 @@ public class EmpleadoController {
 		return empleadoRepository.save(newEmpleado);
 	}
 	
-	@GetMapping("/empleados")
+	@GetMapping("/empleados/")
 	List<Empleado> getAllEmpleados(){
 		return empleadoRepository.findAll();
 	}

@@ -1,6 +1,6 @@
-package repository;
+package assistcontrolapp.repository;
 
-import model.Contrato;
+import assistcontrolapp.model.Contrato;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ContratoRepository extends JpaRepository<Contrato,String> {
