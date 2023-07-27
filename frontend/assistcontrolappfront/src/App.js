@@ -1,13 +1,15 @@
 import React, { Component } from "react";
 import axios from "axios";
-import { Breadcrumb, Button, Card, Row, Table, Spinner, Modal, Form } from "react-bootstrap";
+import {Modal, Form } from "react-bootstrap";
 import Navbar from './components/Navbar';
 export default class App extends Component {
 	constructor(props) {
     super(props);
     this.state = {
       isLoading: true,
-      ListaEmpleados:'',
+      ListaEmpleados:false,
+      ListaCargos:false,
+      ListaContratos:false,
       nombre_empleado:'',
       apellido_p:'',
       apellido_m:'',
@@ -30,32 +32,19 @@ export default class App extends Component {
 
 	async componentDidMount() {
 		try {
-			const empleados = await this.getEmpleados();
-			console.log(empleados)
-      this.setState({ListaEmpleados:empleados , isLoading:false})
+			const empleados = await axios.get("http://localhost:8080/empleados/").then(response=>this.setState({ListaEmpleados:response.data}))
+      const cargos = await axios.get("http://localhost:8080/contratos/").then(response=>this.setState({ListaContratos:response.data}))
+      const contratos = await axios.get("http://localhost:8080/cargos/").then(response=>this.setState({ListaCargos:response.data}))
+      if(this.state.ListaEmpleados===false){
+        this.setState({isLoading:true})
+      }else{
+        this.setState({isLoading:false})
+      }
+      //this.setState({ListaEmpleados:empleados , isLoading:false})
 		} catch(e) {
 			console.log(e)
 		}
 	}
-
-  getEmpleados(){
-
-    /*
-
-    const empleados=axios.get("http://localhost:8080/empleados")
-
-    */
-    const empleados= [
-
-      {"nombre":"jonas","apellido_p":"rojas","apellido_m":"azules","cargo":"seguridad","contrato":"indefinido"},
-      {"nombre":"jonas","apellido_p":"morado","apellido_m":"morado","cargo":"director","contrato":"plazo fijo"},
-      {"nombre":"abdul","apellido_p":"abdal","apellido_m":"hakim","cargo":"director","contrato":"plazo fijo"},
-      {"nombre":"jonas","apellido_p":"contreras","apellido_m":"sepulveda","cargo":"seguridad","contrato":"plazo fijo"},
-      
-      ]
-
-    return empleados;
-  }
 
   handleModalEmpleados=()=>{
     if(this.state.modalNuevoEmpleado===true){
@@ -91,30 +80,50 @@ export default class App extends Component {
   }
 
   crearNuevoEmpleado=()=>{
-    var empleado_json=[{"nombre":this.state.nombre_empleado_f,"apellido_p":this.state.apellido_p_f,"apellido_m":this.state.apellido_m_f,"cargo":this.state.cargo_f,"contrato":this.state.cargo_f}]
-    this.handleModalEmpleados()
-    console.log(empleado_json)
-    /*
-    axios.post("http://localhost:8080/empleado", empleado_json)
-    */
+    var empleado_json={"nombre":this.state.nombre_empleado_f,"apellido_p":this.state.apellido_p_f,"apellido_m":this.state.apellido_m_f,"cargo":this.state.cargo_f,"contrato":this.state.contrato_f}
+    var comprobar_contrato=false
+    var comprobar_cargo=false
+    this.state.ListaContratos.forEach((element,index) => {
+      if(this.state.contrato_f===element.tipo){
+        comprobar_contrato=true
+      }
+    });
+    this.state.ListaCargos.forEach((element,index)=>{
+      if(this.state.cargo_f===element.nombre){
+        comprobar_cargo=true;
+      }
+    });
+
+    if(comprobar_cargo===false){
+      alert("El cargo ingresado no existe en la empresa");
+    }
+
+    if(comprobar_contrato===false){
+      alert("El tipo de contrato ingresado no existe en la empresa")
+    }
+
+    if(comprobar_contrato===true && comprobar_cargo===true){
+      this.handleModalEmpleados()
+      axios.post("http://localhost:8080/empleado", empleado_json).then(response=>console.log(response.data))
+      window.location.reload();
+    }
   }
 
   crearNuevoCargo=()=>{
-    var cargo_json = [{"nombre":this.state.nombre_nuevo_cargo,"descripcion":this.state.descripcion_nuevo_cargo}]
+    var cargo_json = {"nombre":this.state.nombre_nuevo_cargo,"descripcion":this.state.descripcion_nuevo_cargo}
     this.handleModalCargos()
     console.log(cargo_json)
-    /*
     axios.post("http://localhost:8080/cargo", cargo_json)
-    */
+    window.location.reload();
   }
 
   crearNuevoContrato=()=>{
-    var contrato_json=[{"tipo":this.state.nombre_nuevo_contrato,"duracion":parseInt(this.state.duracion_nuevo_contrato)}]
+    var contrato_json={"tipo":this.state.nombre_nuevo_contrato,"duracion":parseInt(this.state.duracion_nuevo_contrato)}
     this.handleModalContratos()
     console.log(contrato_json)
-    /*
-    axios.post("http://localhost:8080/contrato", contrato_json)
-    */
+    
+    axios.post("http://localhost:8080/contrato", contrato_json).then(response=>console.log(response.data))
+    window.location.reload();
   }
 	render() {
     return ( 
@@ -146,7 +155,7 @@ export default class App extends Component {
                     <h1>"Cargando</h1>
                   :
                   this.state.ListaEmpleados.map((item, index) => (
-                    ((!this.state.nombre || this.state.nombre===item.nombre) && (!this.state.apellido_p || this.state.apellido_p===item.apellido_p) && (!this.state.apellido_m || this.state.apellido_m===item.apellido_m) && (!this.state.cargo || this.state.cargo===item.cargo) && (!this.state.contrato || this.state.contrato===item.contrato))
+                    ((!this.state.nombre || item.nombre.includes(this.state.nombre)) && (!this.state.apellido_p || item.apellido_p.includes(this.state.apellido_p)) && (!this.state.apellido_m || item.apellido_m.includes(this.state.apellido_m)) && (!this.state.cargo || item.cargo.includes(this.state.cargo)) && (!this.state.contrato || item.contrato.includes(this.state.contrato)))
                     ?
                       <>
                       
@@ -179,11 +188,11 @@ export default class App extends Component {
             <Modal.Body>
             <Form>
               <Form.Group className="mb-3">
-                <Form.Control placeholder="Nombre" onChange={(event)=>{this.setState({nombre_f : event.target.value})}} />
-                <Form.Control placeholder="Apellido Paterno" onChange={(event)=>{this.setState({apellido_p_f : event.target.value})}} />
-                <Form.Control placeholder="Apellido Materno" onChange={(event)=>{this.setState({apellido_m_f : event.target.value})}} />
-                <Form.Control placeholder="Cargo" onChange={(event)=>{this.setState({cargo_f : event.target.value})}} />
-                <Form.Control placeholder="Contrato" onChange={(event)=>{this.setState({contrato_f : event.target.value})}} />
+                <Form.Control placeholder="Nombre" onChange={(event)=>{this.setState({nombre_empleado_f : event.target.value.toUpperCase()})}} />
+                <Form.Control placeholder="Apellido Paterno" onChange={(event)=>{this.setState({apellido_p_f : event.target.value.toUpperCase()})}} />
+                <Form.Control placeholder="Apellido Materno" onChange={(event)=>{this.setState({apellido_m_f : event.target.value.toUpperCase()})}} />
+                <Form.Control placeholder="Cargo" onChange={(event)=>{this.setState({cargo_f : event.target.value.toUpperCase()})}} />
+                <Form.Control placeholder="Contrato" onChange={(event)=>{this.setState({contrato_f : event.target.value.toUpperCase()})}} />
               </Form.Group>
             </Form>
             </Modal.Body>
@@ -205,8 +214,8 @@ export default class App extends Component {
           <Modal.Body>
             <Form>
               <Form.Group className="mb-3">
-                <Form.Control placeholder="Nombre del nuevo cargo" onChange={(event)=>{this.setState({nombre_nuevo_cargo : event.target.value})}} />
-                <Form.Control placeholder="Descripción del nuevo cargo" onChange={(event)=>{this.setState({descripcion_nuevo_cargo : event.target.value})}} />
+                <Form.Control placeholder="Nombre del nuevo cargo" onChange={(event)=>{this.setState({nombre_nuevo_cargo : event.target.value.toUpperCase()})}} />
+                <Form.Control placeholder="Descripción del nuevo cargo" onChange={(event)=>{this.setState({descripcion_nuevo_cargo : event.target.value.toUpperCase()})}} />
               </Form.Group>
             </Form>
           </Modal.Body>
@@ -228,7 +237,7 @@ export default class App extends Component {
           <Modal.Body>
           <Form>
               <Form.Group className="mb-3">
-                <Form.Control placeholder="Nombre de nuevo contrato" onChange={(event)=>{this.setState({nombre_nuevo_contrato : event.target.value})}} />
+                <Form.Control placeholder="Nombre de nuevo contrato" onChange={(event)=>{this.setState({nombre_nuevo_contrato : event.target.value.toUpperCase()})}} />
                 <Form.Control placeholder="Duración nuevo contrato" onChange={(event)=>{this.setState({duracion_nuevo_contrato : event.target.value})}} />
               </Form.Group>
             </Form>
@@ -249,11 +258,11 @@ export default class App extends Component {
               <div class="card-body">
           <Form>
             <Form.Group className="mb-10">
-              <Form.Control placeholder="Nombre" onChange={(event)=>{this.setState({nombre : event.target.value})}} />
-              <Form.Control placeholder="Apellido Paterno" onChange={(event)=>{this.setState({apellido_p : event.target.value})}} />
-              <Form.Control placeholder="Apellido Materno" onChange={(event)=>{this.setState({apellido_m : event.target.value})}} />
-              <Form.Control placeholder="Cargo" onChange={(event)=>{this.setState({cargo : event.target.value})}} />
-              <Form.Control placeholder="Contrato" onChange={(event)=>{this.setState({contrato : event.target.value})}} />
+              <Form.Control placeholder="Nombre" onChange={(event)=>{this.setState({nombre : event.target.value.toUpperCase()})}} />
+              <Form.Control placeholder="Apellido Paterno" onChange={(event)=>{this.setState({apellido_p : event.target.value.toUpperCase()})}} />
+              <Form.Control placeholder="Apellido Materno" onChange={(event)=>{this.setState({apellido_m : event.target.value.toUpperCase()})}} />
+              <Form.Control placeholder="Cargo" onChange={(event)=>{this.setState({cargo : event.target.value.toUpperCase()})}} />
+              <Form.Control placeholder="Contrato" onChange={(event)=>{this.setState({contrato : event.target.value.toUpperCase()})}} />
             </Form.Group>
           </Form>
                 </div>
