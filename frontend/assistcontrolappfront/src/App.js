@@ -152,7 +152,7 @@ export default class App extends Component {
             </thead>
             <tbody>
                 {this.state.isLoading ? 
-                    <h1>"Cargando</h1>
+                    <tr><td></td> <td></td> <td></td> <td> <h4> Cargando datos desde la base de datos...</h4></td></tr>
                   :
                   this.state.ListaEmpleados.map((item, index) => (
                     ((!this.state.nombre || item.nombre.includes(this.state.nombre)) && (!this.state.apellido_p || item.apellido_p.includes(this.state.apellido_p)) && (!this.state.apellido_m || item.apellido_m.includes(this.state.apellido_m)) && (!this.state.cargo || item.cargo.includes(this.state.cargo)) && (!this.state.contrato || item.contrato.includes(this.state.contrato)))
